@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Услуги</title>
+</head>
+<body>
+<div name="nav" th:insert="fragments/nav.html :: nav"></div>
+<script src="/js/news_feed.js"></script>
+
+<div class="container" style="margin-top: 10px; margin-bottom: 10px">
+    <div class="blog-card">
+        <div class="card shadow">
+            <div style="padding: 20px 15px 5px 15px">
+                <h3>Отзывы об услугах</h3>
+                <form action="/news/filter_service" name="search" onsubmit="event.preventDefault(); sendFilter($(this))">
+                    <input type="hidden" name="pageNo" th:value="${pageNo}">
+                    <div class="d-flex">
+                        <div class="form-group" style="width:100%">
+                            <label for="brand" style="font-weight: 600;margin-bottom: 7px;">Марка</label>
+                            <br>
+                            <select class="custom-select select2" name="brand" id="brand" style="width:100%">
+                                <option value="">Не выбрано</option>
+                                <option th:each="brand : ${brands}" th:text="${brand?.description}" th:value="${brand?.id}"></option>
+                            </select>
+                            <br>
+                        </div>
+                        <div class="form-check" style="width:100%">
+                            <label for="model" style="font-weight: 600;margin-bottom: 7px;">Модель</label>
+                            <br>
+                            <select class="custom-select select2" name="model" id="model" style="width:100%">
+                                <option value="">Не выбрано</option>
+                            </select>
+                            <br>
+                        </div>
+                        <div class="form-check" style="width:100%">
+                            <label for="generation" style="font-weight: 600;margin-bottom: 7px;">Поколение</label>
+                            <br>
+                            <select class="custom-select select2" name="generation" id="generation" style="width:100%">
+                                <option value="">Не выбрано</option>
+                            </select>
+                            <br>
+                        </div>
+                        <div class="form-check" style="width:100%">
+                            <label for="category" style="font-weight: 600;margin-bottom: 7px;">Категория</label>
+                            <br>
+                            <div class="d-flex">
+                                <select class="custom-select select2" name="category" id="category" style="width:100%">
+                                    <option value="">Не выбрано</option>
+                                    <option th:each="category : ${categories}" th:text="${category.description}" th:value="${category.id}"></option>
+                                </select>
+                            </div>
+                            <br>
+                        </div>
+                        <div class="align-self-center" style="margin-left: 1.5em; margin-top: 4px">
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+                <div th:fragment="posts" name="posts">
+                    <div th:if="${totalItems == 0}" class="text-center">
+                        <p>По заданному фильтру нет постов</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-4" th:each="post : ${posts}" style="margin-top:15px">
+                            <div class="blog-card">
+                                <div class="card shadow">
+                                    <a th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))">
+                                        <img th:if="${post.imageName != null}" th:src="'/image/theDrive_dirs/' + ${post.author.id} + '/' + ${post.uuid} + '/' + ${post.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                        <img th:if="${post.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    </a>
+                                    <div class="card-body" style="height: 158px">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="d-block mb-2" style="font-size:14px" th:text="${#dates.format(post.dateCreate, 'dd.MM.yyyy HH:mm')}"></span>
+                                        </div>
+                                        <a class="h5 text-decoration-none" style="color:#212529" th:text="${post.title}" th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))"></a>
+                                        <p class="" th:text="${post.text}" style="overflow: hidden;text-overflow: ellipsis;height:74px;margin-top:7px"></p>
+                                    </div>
+                                    <div class="card-footer bg-white border-0 px-0 py-0">
+                                        <div class="d-grid">
+                                            <a class="btn btn-sm btn-secondary rounded-0 rounded-bottom" th:href="'/post/' + ${post.id}">
+                                                Перейти
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Пагинация-->
+                    <div class="pagination_block d-flex align-items-center justify-content-between flex-wrap container-fluid" style="margin-top:20px">
+                        <nav aria-label="Page navigation example">
+                            <ul class="pagination" th:if="${totalPages > 1}">
+                                <li class="page-item">
+                                    <span th:if="${currentPage == 1}" class="page-link" aria-label="Previous">
+                                        <span aria-hidden="true"><i class="fa fa-chevron-left disabled_nav_icon"></i></span>
+                                    </span>
+                                    <a th:if="${currentPage != 1}" class="page-link" aria-label="Previous" onclick="paginat($(this))" th:value="${currentPage - 1}">
+                                        <span aria-hidden="true"><i class="fa fa-chevron-left"></i></span>
+                                    </a>
+                                </li>
+                                <li class="page-item page" th:each="i: ${navPages}">
+                                    <a class="page-link" th:if="${currentPage != i} AND ${i != '...'}" onclick="paginat($(this))" th:value="${i}">[[${i}]]</a>
+                                    <span class="page-link active" th:if="${currentPage == i}">[[${i}]]</span>
+                                    <span class="page-link" th:if="${i == '...'}">[[${i}]]</span>
+                                </li>
+                                <li class="page-item">
+                                    <span th:if="${currentPage == totalPages}" class="page-link" aria-label="Next">
+                                        <span aria-hidden="true"><i class="fa fa-chevron-right disabled_nav_icon"></i></span>
+                                    </span>
+                                    <a th:if="${currentPage < totalPages}" class="page-link" aria-label="Next" onclick="paginat($(this))" th:value="${currentPage + 1}">
+                                        <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <div>
+                            <p>Всего <b>[[${totalItems}]]</b> записей</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    $(document).ready(function() {
+        $('.select2').select2();
+    })
+
+
+    $('select[name="brand"]').on("change", function (e) { getModelByBrand() });
+    $('select[name="model"]').on("change", function (e) { getGenerationByBrand() });
+
+</script>
+</body>
+</html>

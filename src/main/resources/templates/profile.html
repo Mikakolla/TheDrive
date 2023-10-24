@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль</title>
+</head>
+<body>
+<div name="nav" th:insert="fragments/nav.html :: nav"></div>
+<script src="/js/profile.js"></script>
+
+<div class="container" style="margin-top:10px">
+    <div class="blog-card" sec:authorize="hasAuthority('DRIVER')">
+        <div class="shadow d-flex align-items-start" style="border:1px solid rgba(0,0,0,.125);border-radius:.25rem; padding: 15px 15px 15px 15px">
+            <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Профиль</button>
+                <button class="nav-link" id="v-pills-messages-tab" data-bs-toggle="pill" data-bs-target="#car" type="button" role="tab" aria-controls="v-pills-messages" aria-selected="false">Автомобили</button>
+                <button class="nav-link" id="v-pills-bookmarks-tab" data-bs-toggle="pill" data-bs-target="#bookmark" type="button" role="tab" aria-controls="v-pills-bookmarks" aria-selected="false">Закладки</button>
+            </div>
+            <div class="tab-content" style="flex-grow: 1" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="blog-card">
+                                <div class="card shadow" style="border-radius:.25rem; padding: 15px 15px 15px 15px" name="userForm" th:fragment="userForm">
+                                    <div class="d-flex justify-content-between">
+                                        <h3>Основная информация</h3>
+                                        <i class="fa fa-edit align-self-center" style="font-size: 18px; color:gray; cursor:pointer" onclick="changeFormEditUser()"></i>
+                                    </div>
+                                    <form action="/user/save" method="post" name="editUser" onsubmit="event.preventDefault(); saveEditUser($(this))">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <label class="form-label" for="login">Логин</label>
+                                        <input type="text" class="form-control" id="login" name="login" th:value="${user.login}" style="background-color: transparent; width:40%" disabled autocomplete="off" required>
+                                        <p th:if="${errorLogin}" th:text="${errorLogin}" style="color:red;font-size: 14px;"></p>
+                                        <br th:unless="${errorLogin}">
+                                        <label class="form-label" for="password" style="display:none">Новый пароль</label>
+                                        <input type="hidden" class="form-control" id="password" name="password" style="background-color: transparent; width:40%; margin-bottom: 20px;" disabled autocomplete="off">
+                                        <label class="form-label" for="firstName">Имя</label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" th:value="${user.firstName}" style="background-color: transparent; width:40%" disabled autocomplete="off" required>
+                                        <br>
+                                        <label class="form-label" for="lastName">Фамилия</label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" th:value="${user.lastName}" style="background-color: transparent; width:40%" disabled autocomplete="off" required>
+                                        <button type="submit" class="btn btn-success" style="display:none; margin-top: 15px">Сохранить</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="blog-card">
+                                <div class="card shadow">
+                                    <a href="#">
+                                        <img th:if="${user.imageName != null}" th:src="'/image/theDrive_dirs/' + ${user.id} + '/' + ${user.uuid} + '/' + ${user.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                        <img th:if="${user.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    </a>
+                                    <div class="card-body">
+                                        <h5 class="text-center" th:text="${user.firstName} + ' ' + ${user.lastName}" style="margin-bottom: 32px; margin-top: 16px"></h5>
+                                        <div class="row text-center">
+                                            <div class="col-6" style="cursor: pointer">
+                                                <a data-bs-toggle="modal" data-bs-target="#followersModal">
+                                                    <h5 th:text="${#lists.size(user.getFollowers())}"></h5>
+                                                    <p>Подписчики</p>
+                                                </a>
+                                                <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="followersModalLabel">Подписчики</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <p th:if="${#lists.size(user.getFollowers()) == 0}" style="margin-top: 16px; color: gray">На вас никто не подписан</p>
+                                                                <ul class="list-group list-group-flush">
+                                                                    <li th:each="follow_user : ${user.getFollowers()}" class="list-group-item" style="cursor: pointer">
+                                                                        <h6 th:text="${follow_user.user.login}" th:href="'/profile/' + ${follow_user.user.id}" onclick="window.location.href=($(this).attr('href'))"></h6>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6" style="cursor: pointer">
+                                                <a data-bs-toggle="modal" data-bs-target="#followModal">
+                                                    <h5 th:text="${#lists.size(user.getFollowCar()) + #lists.size(user.getFollowUser())}"></h5>
+                                                    <p>Подписки</p>
+                                                </a>
+                                                <div class="modal fade" id="followModal" tabindex="-1" aria-labelledby="followModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="followModalLabel">Подписки</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+                                                                    <li class="nav-item" role="presentation">
+                                                                        <button class="nav-link active" id="blog-tab" data-bs-toggle="tab" data-bs-target="#blog" type="button" role="tab" aria-controls="blog" aria-selected="true" style="width: 233px">Пользователи</button>
+                                                                    </li>
+                                                                    <li class="nav-item" role="presentation">
+                                                                        <button class="nav-link" id="service-tab" data-bs-toggle="tab" data-bs-target="#service" type="button" role="tab" aria-controls="service" aria-selected="false" style="width: 233px">Авто</button>
+                                                                    </li>
+                                                                </ul>
+                                                                <div class="tab-content" id="myTabContent">
+                                                                    <div class="tab-pane fade show active" id="blog" role="tabpanel" aria-labelledby="blog-tab">
+                                                                        <p th:if="${#lists.size(user.getFollowUser()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на пользователей</p>
+                                                                        <ul class="list-group list-group-flush">
+                                                                            <li th:each="follow_user : ${user.getFollowUser()}" class="list-group-item" style="cursor: pointer">
+                                                                                <h6 th:text="${follow_user.userFollow.login}" th:href="'/profile/' + ${follow_user.userFollow.id}" onclick="window.location.href=($(this).attr('href'))"></h6>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class="tab-pane fade" id="service" role="tabpanel" aria-labelledby="service-tab">
+<!--                                                                        <p th:if="${#lists.size(user.getFollowCar()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на авто</p>-->
+<!--                                                                        <ul class="list-group list-group-flush" th:each="follow_car : ${user.getFollowCar()}">-->
+<!--                                                                            <li class="list-group-item">-->
+<!--                                                                                <h6 th:text="${follow_car.carFollow.brand.description + ' ' + follow_car.carFollow.model.description + ' ' + follow_car.carFollow.name}"></h6>-->
+<!--                                                                            </li>-->
+<!--                                                                        </ul>-->
+                                                                        <p th:if="${#lists.size(user.getFollowCar()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на авто</p>
+                                                                        <ul class="list-group list-group-flush">
+                                                                            <li th:each="follow_car : ${user.getFollowCar()}" class="list-group-item" style="cursor: pointer">
+                                                                                <h6 th:text="${follow_car.carFollow.brand.description + ' ' + follow_car.carFollow.model.description}" th:href="'/profile/car_profile/' + ${follow_car.carFollow.id}" onclick="window.location.href=($(this).attr('href'))"></h6>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="car" role="tabpanel" aria-labelledby="car-tab">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCarModal">
+                        Добавить автомобиль
+                    </button>
+                    <div class="modal fade" id="addCarModal" tabindex="-1" aria-labelledby="addCarModalLabel" aria-hidden="true" style="z-index: 1045;">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addCarModalLabel">Добавить автомобиль</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="/car/create" method="post" enctype="multipart/form-data" name="createCar">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <label for="brand" style="font-weight: 600;margin-bottom: 7px;">Марка</label>
+                                        <br>
+                                        <select class="custom-select select2" name="brand" id="brand" style="width:100%">
+                                            <option value="">Не выбрано</option>
+                                            <option th:each="brand : ${brands}" th:text="${brand?.description}" th:value="${brand?.id}"></option>
+                                        </select>
+                                        <label for="model" style="font-weight: 600;margin-bottom: 7px;">Модель</label>
+                                        <br>
+                                        <select class="custom-select select2" name="model" id="model" style="width:100%">
+                                            <option value="">Не выбрано</option>
+                                        </select>
+                                        <label for="generation" style="font-weight: 600;margin-bottom: 7px;">Поколение</label>
+                                        <br>
+                                        <select class="custom-select select2" name="generation" id="generation" style="width:100%">
+                                            <option value="">Не выбрано</option>
+                                        </select>
+                                        <label for="generation" style="font-weight: 600;margin-bottom: 7px;" min="1970">Год выпуска</label>
+                                        <br>
+                                        <input type="number" class="form-control" name="yearCreate" step="0.1" required>
+                                        <label for="transmissionDiv" style="font-weight: 600;margin-bottom: 7px;">Коробка передач</label>
+                                        <div class="form-check" name="transmissionDiv" id="transmissionDiv" style="margin-bottom: 16px">
+                                            <label class="form-check-label" for="transmission_true">
+                                                Автоматическая
+                                            </label>
+                                            <input type="radio" name="transmission" value="true" id="transmission_true" required>
+                                            <input type="radio" name="transmission" value="false" id="transmission_false">
+                                            <label class="form-check-label" for="transmission_false">
+                                                Механика
+                                            </label>
+                                        </div>
+                                        <label for="body" style="font-weight: 600;margin-bottom: 7px;">Тип кузова</label>
+                                        <br>
+                                        <select class="custom-select select2" name="body" id="body" style="width:100%">
+                                            <option value="">Не выбрано</option>
+                                            <option th:each="body : ${bodies}" th:text="${body?.description}" th:value="${body?.id}"></option>
+                                        </select>
+                                        <label for="engine" style="font-weight: 600;margin-bottom: 7px;">Тип двигателя</label>
+                                        <br>
+                                        <select class="custom-select select2" name="engine" id="engine" style="width:100%">
+                                            <option value="">Не выбрано</option>
+                                            <option th:each="engine : ${engines}" th:text="${engine?.description}" th:value="${engine?.id}"></option>
+                                        </select>
+                                        <label for="drive" style="font-weight: 600;margin-bottom: 7px;">Привод</label>
+                                        <br>
+                                        <select class="custom-select select2" name="drive" id="drive" style="width:100%">
+                                            <option value="">Не выбрано</option>
+                                            <option th:each="drive : ${drives}" th:text="${drive?.description}" th:value="${drive?.id}"></option>
+                                        </select>
+                                        <label for="nickName" style="font-weight: 600;margin-bottom: 7px;">Ник машины</label>
+                                        <br>
+                                        <input type="text" class="form-control" name="nickName" id="nickName">
+                                        <label for="image" style="font-weight: 600;margin-bottom: 7px;">Обложка</label>
+                                        <input type="file" class="form-control" id="image" style="margin-bottom: 16px" name="image" accept=".png,.jpg,.jpeg">
+                                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6" th:each="car : ${cars}" style="margin-top: 15px">
+                            <div class="blog-card" th:href="${'profile/car_profile/' + car.id}">
+                                <div class="card shadow">
+                                    <img th:if="${car.imageName != null}" th:src="'/image/theDrive_dirs/' + ${car.user.id} +  '/' + ${car.uuid} + '/' + ${car.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    <img th:if="${car.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <h5 href="#" th:text="${car.brand.description} + ' ' + ${car.model.description}"></h5>
+                                            <i class="fa fa-trash align-self-center" style="font-size: 18px; color:gray; cursor:pointer" data-bs-toggle="modal" th:data-bs-target="'#deleteCarModal' + ${car.id}"></i>
+                                            <div class="modal fade" th:id="'deleteCarModal'+${car.id}" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Вы действитеьно хотите удалить автомобиль?</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <form action="/car/delete" method="post">
+                                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                                <input type="hidden" name="carId" th:value="${car.id}">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <button type="submit" class="btn btn-primary">Удалить</button>
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отменить</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6 text-center">
+                                                <h5 th:text="${#lists.size(car.getFollowers())}"></h5>
+                                                <p>Подписчики</p>
+                                            </div>
+                                            <div class="col-6 text-center">
+                                                <h5 th:text="${car.getCountPost()}"></h5>
+                                                <p>Посты</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-0 px-0 py-0">
+                                        <div class="d-grid">
+                                            <a class="btn btn-sm btn-secondary rounded-0 rounded-bottom" th:href="'profile/car_profile/' + ${car.id}">
+                                                Перейти
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="bookmark" role="tabpanel" aria-labelledby="bookmark-tab">
+                    <form name="pagination" action="/profile/pagination" onsubmit="event.preventDefault(); sendFilter($(this))">
+                        <input type="hidden" name="pageNo" th:value="${pageNo}">
+                        <div name="posts" th:fragment="postBookmark">
+                            <div th:if="${totalItems == 0}" class="text-center">
+                                <p>У вас нет закладок</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-4" th:each="post : ${postsBookmarks}" style="margin-top:15px">
+                                    <div class="blog-card">
+                                        <div class="card shadow">
+                                            <a th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))">
+                                                <img th:if="${post.imageName != null}" th:src="'/image/theDrive_dirs/' + ${post.author.id} + '/' + ${post.uuid} + '/' + ${post.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                                <img th:if="${post.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                            </a>
+                                            <div class="card-body" style="height: 158px">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="d-block mb-2" style="font-size:14px" th:text="${#dates.format(post.dateCreate, 'dd.MM.yyyy HH:mm')}"></span>
+                                                </div>
+                                                <a class="h5 text-decoration-none" style="color:#212529" th:text="${post.title}" th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))"></a>
+                                                <p class="" th:text="${post.text}" style="overflow: hidden;text-overflow: ellipsis;height:74px;margin-top:7px"></p>
+                                            </div>
+                                            <div class="card-footer bg-white border-0 px-0 py-0">
+                                                <div class="d-grid">
+                                                    <a class="btn btn-sm btn-secondary rounded-0 rounded-bottom" th:href="'/post/' + ${post.id}">
+                                                        Перейти
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--Пагинация-->
+                            <div th:if="${totalItems > 0}" class="pagination_block d-flex align-items-center justify-content-between flex-wrap container-fluid" style="margin-top:20px">
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination" th:if="${totalPages > 1}">
+                                        <li class="page-item">
+                                        <span th:if="${currentPage == 1}" class="page-link" aria-label="Previous">
+                                            <span aria-hidden="true"><i class="fa fa-chevron-left disabled_nav_icon"></i></span>
+                                        </span>
+                                            <a th:if="${currentPage != 1}" class="page-link" aria-label="Previous" onclick="paginat($(this))" th:value="${currentPage - 1}">
+                                                <span aria-hidden="true"><i class="fa fa-chevron-left"></i></span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item page" th:each="i: ${navPages}">
+                                            <a class="page-link" th:if="${currentPage != i} AND ${i != '...'}" onclick="paginat($(this))" th:value="${i}">[[${i}]]</a>
+                                            <span class="page-link active" th:if="${currentPage == i}">[[${i}]]</span>
+                                            <span class="page-link" th:if="${i == '...'}">[[${i}]]</span>
+                                        </li>
+                                        <li class="page-item">
+                                        <span th:if="${currentPage == totalPages}" class="page-link" aria-label="Next">
+                                            <span aria-hidden="true"><i class="fa fa-chevron-right disabled_nav_icon"></i></span>
+                                        </span>
+                                            <a th:if="${currentPage < totalPages}" class="page-link" aria-label="Next" onclick="paginat($(this))" th:value="${currentPage + 1}">
+                                                <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                <div>
+                                    <p>Всего <b>[[${totalItems}]]</b> записей</p>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="blog-card" sec:authorize="hasAuthority('COMPANY')">
+        <div class="shadow d-flex align-items-start" style="border-radius:.25rem; padding: 15px 15px 15px 15px">
+            <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active" id="v-pills-company-tab" data-bs-toggle="pill" data-bs-target="#company" type="button" role="tab" aria-controls="v-pills-company" aria-selected="false">Комапния</button>
+                <button class="nav-link" id="v-pills-messages-tab" data-bs-toggle="pill" data-bs-target="#car" type="button" role="tab" aria-controls="v-pills-messages" aria-selected="false">Авто в работе</button>
+                <button class="nav-link" id="v-pills-services-tab" data-bs-toggle="pill" data-bs-target="#services" type="button" role="tab" aria-controls="v-pills-services" aria-selected="false">Услуги</button>
+            </div>
+            <div class="tab-content" style="flex-grow: 1" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="company" role="tabpanel" aria-labelledby="company-tab">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="blog-card">
+                                <div class="card shadow" style="border-radius:.25rem; padding: 15px 15px 15px 15px" name="companyForm">
+                                    <form action="">
+                                        <label class="form-label" for="site">Сайт компании</label>
+                                        <p><a id="site" th:href="${company.site}" th:text="${company.site}"></a></p>
+                                        <label class="form-label" for="number">Номер</label>
+                                        <p id="number" th:text="${company.number}"></p>
+                                        <label class="form-label" for="firstName">Адрес</label>
+                                        <p id="address" th:text="${company.address}"></p>
+                                        <label class="form-label" for="description">Описание</label>
+                                        <p id="description" th:text="${company.description}"></p>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="blog-card">
+                                <div class="card shadow">
+                                    <a href="#">
+                                        <img th:if="${user.imageName != null}" th:src="'/image/theDrive_dirs/' + ${user.id} + '/' + ${user.uuid} + '/' + ${user.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                        <img th:if="${user.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    </a>
+                                    <div class="card-body">
+                                        <h5 class="text-center" th:text="${user.firstName} + ' ' + ${user.lastName}" style="margin-bottom: 32px; margin-top: 16px"></h5>
+                                        <div class="row text-center">
+                                            <div class="col-6" style="cursor: pointer">
+                                                <a data-bs-toggle="modal" data-bs-target="#followersModal">
+                                                    <h5 th:text="${#lists.size(user.getFollowers())}"></h5>
+                                                    <p>Подписчики</p>
+                                                </a>
+                                                <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="followersModalLabel">Подписчики</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <!--                                                                <p th:if="${#lists.size(user.getFollowUser()) == 0}" style="margin-top: 16px; color: gray">На вас никто не подписан</p>-->
+                                                                <ul th:each="follow_user : ${user.getFollowUser()}">
+                                                                    <li th:text="${follow_user.userFollow.login}"></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6" style="cursor: pointer">
+                                                <a data-bs-toggle="modal" data-bs-target="#followModal">
+                                                    <h5 th:text="${#lists.size(user.getFollowCar()) + #lists.size(user.getFollowUser())}"></h5>
+                                                    <p>Подписки</p>
+                                                </a>
+                                                <div class="modal fade" id="followModal" tabindex="-1" aria-labelledby="followModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="followModalLabel">Подписки</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+                                                                    <li class="nav-item" role="presentation">
+                                                                        <button class="nav-link active" id="blog-tab" data-bs-toggle="tab" data-bs-target="#blog" type="button" role="tab" aria-controls="blog" aria-selected="true" style="width: 233px">Пользователи</button>
+                                                                    </li>
+                                                                    <li class="nav-item" role="presentation">
+                                                                        <button class="nav-link" id="service-tab" data-bs-toggle="tab" data-bs-target="#service" type="button" role="tab" aria-controls="service" aria-selected="false" style="width: 233px">Авто</button>
+                                                                    </li>
+                                                                </ul>
+                                                                <div class="tab-content" id="myTabContent">
+                                                                    <div class="tab-pane fade show active" id="blog" role="tabpanel" aria-labelledby="blog-tab">
+                                                                        <p th:if="${#lists.size(user.getFollowUser()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на пользователей</p>
+                                                                        <ul th:each="follow_user : ${user.getFollowUser()}">
+                                                                            <li th:text="${follow_user.userFollow.login}"></li>
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class="tab-pane fade" id="service" role="tabpanel" aria-labelledby="service-tab">
+                                                                        <p th:if="${#lists.size(user.getFollowCar()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на авто</p>
+                                                                        <ul class="list-group list-group-flush" th:each="follow_car : ${user.getFollowCar()}">
+                                                                            <li class="list-group-item">
+                                                                                <h6 th:text="${follow_car.carFollow.brand.description + ' ' + follow_car.carFollow.model.description + ' ' + follow_car.carFollow.name}"></h6>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+<!--                                    <div class="card-footer bg-white border-0 px-0 py-0">-->
+<!--                                        <div class="d-grid">-->
+<!--                                            <a class="btn btn-warning rounded-0 rounded-bottom" data-bs-toggle="modal" data-bs-target="#addOnlineRecordModal">-->
+<!--                                                Онлайн запись-->
+<!--                                            </a>-->
+<!--                                            <div class="modal fade" id="addOnlineRecordModal" tabindex="-1" aria-labelledby="addOnlineRecordModalLabel" aria-hidden="true" style="z-index: 1045;">-->
+<!--                                                <div class="modal-dialog">-->
+<!--                                                    <div class="modal-content">-->
+<!--                                                        <div class="modal-header">-->
+<!--                                                            <h5 class="modal-title" id="addOnlineRecordModalLabel">Онлайн запись</h5>-->
+<!--                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
+<!--                                                        </div>-->
+<!--                                                        <div class="modal-body">-->
+<!--                                                            <form action="/service/add" method="post">-->
+<!--                                                                <label for="price" class="form-label" style="margin-top: 16px; ">Цена (руб)</label>-->
+<!--                                                                <input type="number" class="form-control" style="margin-bottom: 16px" id="price" name="price" autocomplete="off" required>-->
+<!--                                                                <button type="submit" class="btn btn-primary">Сохранить</button>-->
+<!--                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>-->
+<!--                                                            </form>-->
+<!--                                                        </div>-->
+<!--                                                    </div>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="car" role="tabpanel" aria-labelledby="car-tab">
+                    <div class="row">
+                        <div class="col-4" th:each="useService : ${useServices}" style="margin-top:15px">
+                            <div class="blog-card">
+                                <div class="card shadow">
+                                    <a>
+                                        <img th:if="${useService.car.imageName != null}" th:src="'/image/theDrive_dirs/' + ${useService.user.id} + '/' + ${useService.car.uuid} + '/' + ${useService.car.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                        <img th:if="${useService.car.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    </a>
+                                    <div class="card-body">
+                                        <div>
+                                            <p class="d-block mb-2" style="font-size:14px" th:text="'Дата начала: ' + ${#dates.format(useService.dateStart, 'dd.MM.yyyy HH:mm')}"></p>
+                                            <p class="d-block mb-2" style="font-size:14px" th:text="'Дата окончания: ' + ${#dates.format(useService.dateFinish, 'dd.MM.yyyy HH:mm')}"></p>
+                                        </div>
+                                        <h5 style="margin: 16px 0 16px 0" th:text="${useService.services.name}"></h5>
+                                        <a th:href="'/profile/car_profile/' + ${useService.car.id}" onclick="window.location.href=($(this).attr('href'))" style="color: #212529;text-decoration: none;">
+                                            <h6 th:unless="${useService.car.name} == null" th:text="${useService.car.brand.description} + ' ' + ${useService.car.model.description} + ' ' + ${useService.car.name}" style="margin-bottom: 32px; margin-top: 16px"></h6>
+                                            <h6 th:if="${useService.car.name} == null" th:text="${useService.car.brand.description} + ' ' + ${useService.car.model.description}" style="margin-bottom: 32px; margin-top: 16px"></h6>
+                                        </a>
+                                        <div class="d-flex align-items-center">
+                                            <i th:if="${useService.status.code == 'AWAIT'}" name="status" class="fa fa-circle" style="color:#17a2b8; margin-right: 5px"></i>
+                                            <i th:if="${useService.status.code == 'IN_PROCESS'}" name="status" class="fa fa-circle" style="color:#ffd862; margin-right: 5px"></i>
+                                            <i th:if="${useService.status.code == 'DONE'}" name="status" class="fa fa-circle" style="color:#2dbf4e; margin-right: 5px"></i>
+                                            <select class="form-select" style="padding:.375rem 2.25rem .375rem .75rem; border: 0" name="status" th:id="${useService.id}">
+                                                <option value="AWAIT" th:selected="${useService.status.code == 'AWAIT'}">Ожидает</option>
+                                                <option value="IN_PROCESS" th:selected="${useService.status.code == 'IN_PROCESS'}">В процессе</option>
+                                                <option value="DONE" th:selected="${useService.status.code == 'DONE'}">Завершен</option>
+                                            </select>
+                                        </div>
+<!--                                        <span th:if="${useService.status.code == 'AWAIT'}"><i class="fa fa-circle" style="color:#17a2b8"></i> Ожидает</span>-->
+<!--                                        <span th:if="${useService.status.code == 'IN_PROCESS'}"><i class="fa fa-circle" style="color:#ffd862"></i> В процессе</span>-->
+<!--                                        <span th:if="${useService.status.code == 'DONE'}"><i class="fa fa-circle" style="color:#2dbf4e"></i> Завершен</span>-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                        Добавить услугу
+                    </button>
+                    <div class="modal fade" id="addServiceModal" tabindex="-1" aria-labelledby="addServiceModalLabel" aria-hidden="true" style="z-index: 1045;">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addServiceModalLabel">Добавить услугу</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="/service/add" method="post">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <input type="hidden" name="companyId" th:value="${company.id}">
+                                        <label for="name" class="form-label">Название</label>
+                                        <input type="text" class="form-control" style="margin-bottom: 16px" id="name" name="name" autocomplete="off" required>
+                                        <label for="hourSpend" class="form-label">Время выполнения (часы)</label>
+                                        <input type="number" class="form-control" style="margin-bottom: 16px" id="hourSpend" name="hourSpend" autocomplete="off" required>
+                                        <label for="categoryId" class="form-label">Категория</label>
+                                        <br>
+                                        <select class="custom-select select2" name="categoryId" id="categoryId" style="width:100%" required>
+                                            <option th:each="category : ${categories}" th:text="${category.description}" th:value="${category.id}"></option>
+                                        </select>
+                                        <br>
+                                        <label for="price" class="form-label" style="margin-top: 16px; ">Цена (руб)</label>
+                                        <input type="number" class="form-control" style="margin-bottom: 16px" id="price" name="price" autocomplete="off" required>
+                                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:each="service : ${company.services}" class="row align-items-center" style="min-height: 60px;border: 2px solid #efefef;border-radius: .25rem; margin: 15px 0 0 0">
+                        <div class="col-3">
+                            <span class="h6" th:text="${service.name}"></span>
+                        </div>
+                        <div class="col-3">
+                            <span th:text="'Время выполнения: ' + ${service.timeSpend} + ' ч.'"></span>
+                        </div>
+                        <div class="col-3">
+                            <span th:text="'Категория: ' + ${service.category.description}"></span>
+                        </div>
+                        <div class="col-2">
+                            <span th:text="'Цена: ' + ${service.price} + ' руб.'"></span>
+                        </div>
+                        <div class="col-1">
+                            <div class="row">
+                                <div class="col-6">
+                                    <i class="fa fa-edit align-self-center" style="font-size: 18px; color:gray; cursor:pointer" data-bs-toggle="modal" th:data-bs-target="'#editService' + ${service.id}"></i>
+                                    <div class="modal fade" th:id="'editService' + ${service.id}" tabindex="-1" aria-labelledby="editServiceLabel" aria-hidden="true" style="z-index: 1045;">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editServiceLabel">Редактирование услуги</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form action="/service/edit" method="post">
+                                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                        <input type="hidden" name="serviceId" th:value="${service.id}">
+                                                        <label for="name" class="form-label">Название</label>
+                                                        <input type="text" class="form-control" style="margin-bottom: 16px" th:value="${service.name}" id="name" name="name" autocomplete="off" required>
+                                                        <label for="hourSpend" class="form-label">Время выполнения (часы)</label>
+                                                        <input type="number" class="form-control" style="margin-bottom: 16px" th:value="${service.timeSpend}" id="hourSpend" name="hourSpend" autocomplete="off" required>
+                                                        <label th:for="categoryIdEdit + ${service.id}" class="form-label">Категория</label>
+                                                        <br>
+                                                        <select class="custom-select select2" name="categoryIdEdit" th:id="categoryIdEdit + ${service.id}" style="width:100%" required>
+                                                            <option th:each="category : ${categories}" th:text="${category.description}" th:value="${category.id}" th:selected="${category.id == service.category.id}"></option>
+                                                        </select>
+                                                        <br>
+                                                        <label for="price" class="form-label" style="margin-top: 16px; ">Цена (руб)</label>
+                                                        <input type="number" class="form-control" style="margin-bottom: 16px" th:value="${service.price}" id="price" name="price" autocomplete="off" required>
+                                                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <i class="fa fa-trash align-self-center" style="font-size: 18px; color:gray; cursor:pointer" th:onclick="deleteService([[${service.id}]]), $(this).closest('div.row.align-items-center').remove()"></i>
+<!--                                    th:onclick="deleteService([[${service.id}]])"-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="blog-card" sec:authorize="hasAuthority('AUTHOR')">
+        <div class="shadow d-flex align-items-start" style="border:1px solid rgba(0,0,0,.125);border-radius:.25rem; padding: 15px 15px 15px 15px">
+            <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Профиль</button>
+                <button class="nav-link" id="v-pills-messages-tab" data-bs-toggle="pill" data-bs-target="#news" type="button" role="tab" aria-controls="v-pills-messages" aria-selected="false">Новости</button>
+                <button class="nav-link" id="v-pills-bookmarks-tab" data-bs-toggle="pill" data-bs-target="#bookmark" type="button" role="tab" aria-controls="v-pills-bookmarks" aria-selected="false">Закладки</button>
+            </div>
+            <div class="tab-content" style="flex-grow: 1" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="blog-card">
+                                <div class="card shadow" style="border-radius:.25rem; padding: 15px 15px 15px 15px" name="userForm">
+                                    <div class="d-flex justify-content-between">
+                                        <h3>Основная информация</h3>
+                                        <i class="fa fa-edit align-self-center" style="font-size: 18px; color:gray; cursor:pointer" onclick="changeFormEditUser()"></i>
+                                    </div>
+                                    <form action="/user/save" method="post" name="editUser" onsubmit="event.preventDefault(); saveEditUser($(this))">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <label class="form-label" for="login">Логин</label>
+                                        <input type="text" class="form-control" id="login" name="login" th:value="${user.login}" style="background-color: transparent; width:40%" disabled autocomplete="off" required>
+                                        <p th:if="${errorLogin}" th:text="${errorLogin}" style="color:red;font-size: 14px;"></p>
+                                        <br th:unless="${errorLogin}">
+                                        <label class="form-label" for="password" style="display:none">Новый пароль</label>
+                                        <input type="hidden" class="form-control" id="password" name="password" style="background-color: transparent; width:40%; margin-bottom: 20px;" disabled autocomplete="off">
+                                        <label class="form-label" for="firstName">Имя</label>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" th:value="${user.firstName}" style="background-color: transparent; width:40%" disabled autocomplete="off" required>
+                                        <br>
+                                        <label class="form-label" for="lastName">Фамилия</label>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" th:value="${user.lastName}" style="background-color: transparent; width:40%" disabled autocomplete="off" required>
+                                        <button type="submit" class="btn btn-success" style="display:none; margin-top: 15px">Сохранить</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="blog-card">
+                                <div class="card shadow">
+                                    <a href="#">
+                                        <img th:if="${user.imageName != null}" th:src="'/image/theDrive_dirs/' + ${user.id} + '/' + ${user.uuid} + '/' + ${user.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                        <img th:if="${user.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                    </a>
+                                    <div class="card-body">
+                                        <h5 class="text-center" th:text="${user.firstName} + ' ' + ${user.lastName}" style="margin-bottom: 32px; margin-top: 16px"></h5>
+                                        <div class="row text-center">
+                                            <div class="col-6" style="cursor: pointer">
+                                                <a data-bs-toggle="modal" data-bs-target="#followersModal">
+                                                    <h5 th:text="${#lists.size(user.getFollowers())}"></h5>
+                                                    <p>Подписчики</p>
+                                                </a>
+                                                <div class="modal fade" id="followersModal" tabindex="-1" aria-labelledby="followersModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="followersModalLabel">Подписчики</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <p th:if="${#lists.size(user.getFollowers()) == 0}" style="margin-top: 16px; color: gray">На вас никто не подписан</p>
+                                                                <ul class="list-group list-group-flush">
+                                                                    <li th:each="follow_user : ${user.getFollowers()}" class="list-group-item" style="cursor: pointer">
+                                                                        <h6 th:text="${follow_user.user.login}" th:href="'/profile/' + ${follow_user.user.id}" onclick="window.location.href=($(this).attr('href'))"></h6>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6" style="cursor: pointer">
+                                                <a data-bs-toggle="modal" data-bs-target="#followModal">
+                                                    <h5 th:text="${#lists.size(user.getFollowCar()) + #lists.size(user.getFollowUser())}"></h5>
+                                                    <p>Подписки</p>
+                                                </a>
+                                                <div class="modal fade" id="followModal" tabindex="-1" aria-labelledby="followModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="followModalLabel">Подписки</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+                                                                    <li class="nav-item" role="presentation">
+                                                                        <button class="nav-link active" id="blog-tab" data-bs-toggle="tab" data-bs-target="#blog" type="button" role="tab" aria-controls="blog" aria-selected="true" style="width: 233px">Пользователи</button>
+                                                                    </li>
+                                                                    <li class="nav-item" role="presentation">
+                                                                        <button class="nav-link" id="service-tab" data-bs-toggle="tab" data-bs-target="#service" type="button" role="tab" aria-controls="service" aria-selected="false" style="width: 233px">Авто</button>
+                                                                    </li>
+                                                                </ul>
+                                                                <div class="tab-content" id="myTabContent">
+                                                                    <div class="tab-pane fade show active" id="blog" role="tabpanel" aria-labelledby="blog-tab">
+                                                                        <p th:if="${#lists.size(user.getFollowUser()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на пользователей</p>
+                                                                        <ul class="list-group list-group-flush">
+                                                                            <li th:each="follow_user : ${user.getFollowUser()}" class="list-group-item" style="cursor: pointer">
+                                                                                <h6 th:text="${follow_user.userFollow.login}" th:href="'/profile/' + ${follow_user.userFollow.id}" onclick="window.location.href=($(this).attr('href'))"></h6>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class="tab-pane fade" id="service" role="tabpanel" aria-labelledby="service-tab">
+                                                                        <!--                                                                        <p th:if="${#lists.size(user.getFollowCar()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на авто</p>-->
+                                                                        <!--                                                                        <ul class="list-group list-group-flush" th:each="follow_car : ${user.getFollowCar()}">-->
+                                                                        <!--                                                                            <li class="list-group-item">-->
+                                                                        <!--                                                                                <h6 th:text="${follow_car.carFollow.brand.description + ' ' + follow_car.carFollow.model.description + ' ' + follow_car.carFollow.name}"></h6>-->
+                                                                        <!--                                                                            </li>-->
+                                                                        <!--                                                                        </ul>-->
+                                                                        <p th:if="${#lists.size(user.getFollowCar()) == 0}" style="margin-top: 16px; color: gray">У вас нет подписок на авто</p>
+                                                                        <ul class="list-group list-group-flush">
+                                                                            <li th:each="follow_car : ${user.getFollowCar()}" class="list-group-item" style="cursor: pointer">
+                                                                                <h6 th:text="${follow_car.carFollow.brand.description + ' ' + follow_car.carFollow.model.description}" th:href="'/profile/car_profile/' + ${follow_car.carFollow.id}" onclick="window.location.href=($(this).attr('href'))"></h6>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="news" role="tabpanel" aria-labelledby="car-tab">
+                    <div class="tab-pane fade show active" id="blog" role="tabpanel" aria-labelledby="blog-tab">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPost" style="margin: 15px 0 15px 0">
+                            Добавить новость
+                        </button>
+                        <div class="modal fade" id="addPost" tabindex="-1" aria-labelledby="addPostLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="addPostLabel">Добавить новость</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="/post/add" method="post" enctype="multipart/form-data">
+                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                            <label for="title" class="form-label">Заголовок</label>
+                                            <input type="text" class="form-control" style="margin-bottom: 16px" id="title" name="title" autocomplete="off">
+                                            <label for="text" class="form-label">Текст новости</label>
+                                            <textarea class="form-control" style="margin-bottom: 16px" id="text" name="text" rows="3" autocomplete="off"></textarea>
+                                            <label for="image" class="form-label">Обложка</label>
+                                            <input type="file" class="form-control" id="image" style="margin-bottom: 16px" name="image" accept=".png,.jpg,.jpeg">
+                                            <div class="form-check" style="margin-bottom: 16px">
+                                                <input class="form-check-input" type="checkbox" value="true" id="display" name="display" checked>
+                                                <label class="form-check-label" for="display">
+                                                    Отображать пост
+                                                </label>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4" style="margin-top:15px" th:each="post : ${posts}">
+                                <div class="blog-card">
+                                    <div class="card shadow">
+                                        <a th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))">
+                                            <img th:if="${post.imageName != null}" th:src="'/image/theDrive_dirs/' + ${post.author.id} + '/' + ${post.uuid} + '/' + ${post.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                            <img th:if="${post.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                        </a>
+                                        <div class="card-body" style="height: 117px">
+                                            <div class="d-flex justify-content-between">
+                                                <span class="d-block mb-2" style="font-size:14px" th:text="${#dates.format(post.dateCreate, 'dd.MM.yyyy HH:mm')}"></span>
+                                                <div>
+                                                    <i class="fa fa-edit" data-bs-toggle="modal" th:data-bs-target="'#editPostModal' + ${post.id}" style="font-size: 18px; color:gray; cursor:pointer"></i>
+                                                    <div class="modal fade" th:id="'editPostModal' + ${post.id}" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="editPostModalLabel">Редактировать пост</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <form th:action="'/post/edit/' + ${post.id}" method="post" enctype="multipart/form-data">
+                                                                        <label for="title" class="form-label">Заголовок</label>
+                                                                        <input type="text" th:value="${post.title}" class="form-control" style="margin-bottom: 16px" id="title" name="title" autocomplete="off">
+                                                                        <label for="text" class="form-label">Текст новости</label>
+                                                                        <textarea th:text="${post.text}" class="form-control" style="margin-bottom: 16px" id="text" name="text" rows="3" autocomplete="off"></textarea>
+                                                                        <label for="image" class="form-label">Обложка</label>
+                                                                        <input type="file" class="form-control" id="image" style="margin-bottom: 16px" name="image" accept=".png,.jpg,.jpeg">
+                                                                        <div class="form-check" style="margin-bottom: 16px">
+                                                                            <input class="form-check-input" type="checkbox" th:value="${post.display == true} ? 'true' : '' " id="display" name="display" onchange="changeCheckbox($(this))" th:checked="${post.display}">
+                                                                            <label class="form-check-label" for="display">
+                                                                                Отображать пост
+                                                                            </label>
+                                                                        </div>
+                                                                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <i th:unless="${post.display}" class="fa fa-eye-slash" style="font-size: 18px; color:gray; margin-left: 5px"></i>
+                                                </div>
+                                            </div>
+                                            <a class="h5 text-decoration-none" style="color:#212529" href="#" th:text="${post.title}" th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))"></a>
+                                        </div>
+                                        <div class="card-footer bg-white border-0 px-0 py-0">
+                                            <div class="d-grid">
+                                                <a class="btn btn-sm btn-secondary rounded-0 rounded-bottom" th:href="'/post/' + ${post.id}">
+                                                    Перейти
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="bookmark" role="tabpanel" aria-labelledby="bookmark-tab">
+                    <form name="pagination" action="/profile/pagination" onsubmit="event.preventDefault(); sendFilter($(this))">
+                        <input type="hidden" name="pageNo" th:value="${pageNo}">
+                        <div name="posts" th:fragment="postBookmark">
+                            <div th:if="${totalItems == 0}" class="text-center">
+                                <p>У вас нет закладок</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-4" th:each="post : ${postsBookmarks}" style="margin-top:15px">
+                                    <div class="blog-card">
+                                        <div class="card shadow">
+                                            <a th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))">
+                                                <img th:if="${post.imageName != null}" th:src="'/image/theDrive_dirs/' + ${post.author.id} + '/' + ${post.uuid} + '/' + ${post.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                                <img th:if="${post.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                                            </a>
+                                            <div class="card-body" style="height: 158px">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="d-block mb-2" style="font-size:14px" th:text="${#dates.format(post.dateCreate, 'dd.MM.yyyy HH:mm')}"></span>
+                                                </div>
+                                                <a class="h5 text-decoration-none" style="color:#212529" th:text="${post.title}" th:href="'/post/' + ${post.id}" onclick="window.location.href=($(this).attr('href'))"></a>
+                                                <p class="" th:text="${post.text}" style="overflow: hidden;text-overflow: ellipsis;height:74px;margin-top:7px"></p>
+                                            </div>
+                                            <div class="card-footer bg-white border-0 px-0 py-0">
+                                                <div class="d-grid">
+                                                    <a class="btn btn-sm btn-secondary rounded-0 rounded-bottom" th:href="'/post/' + ${post.id}">
+                                                        Перейти
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--Пагинация-->
+                            <div th:if="${totalItems > 0}" class="pagination_block d-flex align-items-center justify-content-between flex-wrap container-fluid" style="margin-top:20px">
+                                <nav aria-label="Page navigation example">
+                                    <ul class="pagination" th:if="${totalPages > 1}">
+                                        <li class="page-item">
+                                        <span th:if="${currentPage == 1}" class="page-link" aria-label="Previous">
+                                            <span aria-hidden="true"><i class="fa fa-chevron-left disabled_nav_icon"></i></span>
+                                        </span>
+                                            <a th:if="${currentPage != 1}" class="page-link" aria-label="Previous" onclick="paginat($(this))" th:value="${currentPage - 1}">
+                                                <span aria-hidden="true"><i class="fa fa-chevron-left"></i></span>
+                                            </a>
+                                        </li>
+                                        <li class="page-item page" th:each="i: ${navPages}">
+                                            <a class="page-link" th:if="${currentPage != i} AND ${i != '...'}" onclick="paginat($(this))" th:value="${i}">[[${i}]]</a>
+                                            <span class="page-link active" th:if="${currentPage == i}">[[${i}]]</span>
+                                            <span class="page-link" th:if="${i == '...'}">[[${i}]]</span>
+                                        </li>
+                                        <li class="page-item">
+                                        <span th:if="${currentPage == totalPages}" class="page-link" aria-label="Next">
+                                            <span aria-hidden="true"><i class="fa fa-chevron-right disabled_nav_icon"></i></span>
+                                        </span>
+                                            <a th:if="${currentPage < totalPages}" class="page-link" aria-label="Next" onclick="paginat($(this))" th:value="${currentPage + 1}">
+                                                <span aria-hidden="true"><i class="fa fa-chevron-right"></i></span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                                <div>
+                                    <p>Всего <b>[[${totalItems}]]</b> записей</p>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    $(document).ready(function() {
+        $('.select2').select2();
+    })
+
+    $('select[name="brand"]').on("change", function (e) { getModelByBrand() });
+    $('select[name="model"]').on("change", function (e) { getGenerationByBrand() });
+    $('select[name="status"]').on("change", function (e) { changeStatusUseServices($(this)) });
+
+</script>
+</body>
+</html>

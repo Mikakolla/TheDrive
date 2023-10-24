@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/html"
+      xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Новость</title>
+</head>
+<body>
+<div name="nav" th:insert="fragments/nav.html :: nav"></div>
+<script src="/js/post.js"></script>
+<script src="/js/subscription.js"></script>
+
+<div class="container" style="margin-top: 10px; margin-bottom: 10px">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    <div class="row">
+        <div class="col-9">
+            <div class="blog-card">
+                <div class="card shadow">
+                    <img th:if="${post.imageName != null}" th:src="'/image/theDrive_dirs/' + ${author.id} + '/' + ${post.uuid} + '/' + ${post.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 359px">
+                    <img th:if="${post.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 359px">
+                    <div style="padding: 0 10px 10px 10px">
+                        <h3 th:text="${post.title}" style="margin: 15px 0 15px 0"></h3>
+                        <p th:utext="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(post.text),'\n','&lt;br /&gt;'))}"></p>
+                        <br>
+                        <div class="d-flex">
+                            <b th:if="${post.price}"><span th:text="'Цена вопроса: ' + ${post.price} + ' $'" style="margin-right:15px"></span></b>
+                            <b th:if="${post.mileage}"><span th:text="'Пробег: ' + ${post.mileage}"></span></b>
+                        </div>
+                        <div class="d-flex" th:if="${post.company != null}" style="margin-top:10px">
+                            <b>
+                                <a th:href="'/profile/' + ${post.company.user.id}" style="color: #212529;text-decoration: none;">
+                                    <span th:text="'Сервис: ' + ${post.company.name}"></span>
+                                </a>
+                            </b>
+                        </div>
+                        <div class="d-flex" th:if="${post.services != null}" style="margin-top:10px">
+                            <b style="color: #212529;text-decoration: none;">
+                                <span th:text="'Услуга: ' + ${post.services.name}"></span>
+                            </b>
+                        </div>
+                        <br>
+                        <div class="d-flex">
+                            <i sec:authorize="isAuthenticated()" th:if="${likeOnPostFromUser == false}" class="fa fa-heart-o align-self-center" style="font-size: 18px; color:gray; cursor:pointer" th:onclick="addLike($(this), [[${post.id}]])"></i>
+                            <i sec:authorize="isAuthenticated()" th:if="${likeOnPostFromUser == true}" class="fa fa-heart align-self-center" style="font-size: 18px; color:#cb0000; cursor:pointer" th:onclick="removeLike($(this), [[${post.id}]])"></i>
+                            <i sec:authorize="isAnonymous()" class="fa fa-heart-o align-self-center" style="font-size: 18px; color:gray; cursor:auto"></i>
+                            <span name="countLike" style="margin-left: 4px" th:text="${#lists.size(post.like)}"></span>
+                            <i sec:authorize="isAuthenticated()" th:if="${bookmarkOnPostFromUser == false}" class="fa fa-bookmark-o align-self-center" style="font-size: 21px; color:gray; cursor:pointer; margin-left: 15px" th:onclick="addBookmark($(this), [[${post.id}]])"></i>
+                            <i sec:authorize="isAuthenticated()" th:if="${bookmarkOnPostFromUser == true}" class="fa fa-bookmark align-self-center" style="font-size: 21px; color:#ffc107; cursor:pointer; margin-left: 15px" th:onclick="removeBookmark($(this), [[${post.id}]])"></i>
+                        </div>
+                        <br th:if="${post.mileage} or ${post.price}">
+                        <span style="color: gray" th:text="${#dates.format(post.dateCreate, 'dd.MM.yyyy HH:mm')}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="blog-card" style="margin-bottom:24px">
+                <div class="card shadow">
+                    <a th:href="'/profile/' + ${author.id}" onclick="window.location.href=($(this).attr('href'))">
+                        <img th:if="${author.imageName != null}" th:src="'/image/theDrive_dirs/' + ${author.id} + '/' + ${author.uuid} + '/' + ${author.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                        <img th:if="${author.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="text-center" th:text="${author.firstName} + ' ' + ${author.lastName}" th:href="'/profile/' + ${author.id}" onclick="window.location.href=($(this).attr('href'))" style="margin-bottom: 32px; margin-top: 16px; cursor:pointer"></h5>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h5 th:text="${#lists.size(author.getFollowers())}"></h5>
+                                <p>Подписчики</p>
+                            </div>
+                            <div class="col-6">
+                                <h5 th:text="${#lists.size(author.getPosts())}"></h5>
+                                <p>Посты</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${subscriptionUser != null}" class="card-footer bg-white border-0 px-0 py-0">
+                    <!--                      th:unless="${#authentication.getPrincipal().getId() == author.id}"-->
+                        <div class="d-grid">
+                            <button th:if="${subscriptionUser == false}" class="btn btn-sm btn-secondary rounded-0 rounded-bottom" name="subscription_button" style="background-color: #007bff; border: none; transition: background-color 0.7s ease;" th:onclick="changeSubscriptionUser([[${author.id}]])">Подписаться</button>
+                            <button th:if="${subscriptionUser == true}" class="btn btn-sm btn-secondary rounded-0 rounded-bottom" name="subscription_button" style="background-color: #28a745; border: none; transition: background-color 0.7s ease;" th:onclick="changeSubscriptionUser([[${author.id}]])">Отписаться</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${post.car != null}" class="blog-card">
+                <div class="card shadow">
+                    <a th:href="'/profile/car_profile/' + ${post.car.id}" onclick="window.location.href=($(this).attr('href'))">
+                        <img th:if="${post.car.imageName != null}" th:src="'/image/theDrive_dirs/' + ${author.id} + '/' + ${post.car.uuid} + '/' + ${post.car.imageName}" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                        <img th:if="${post.car.imageName == null}" src="/image/theDrive_dirs/image/post.PNG" class="card-img-top rounded-top" style="object-fit: cover; height: 150px">
+                    </a>
+                    <div class="card-body">
+                        <a th:href="'/profile/car_profile/' + ${post.car.id}" onclick="window.location.href=($(this).attr('href'))" class="text-center" style="color: #212529;text-decoration: none;">
+                            <h5 class="text-center" th:unless="${post.car.name} == null" th:text="${post.car.brand.description} + ' ' + ${post.car.model.description} + ' ' + ${post.car.name}" style="margin-bottom: 32px; margin-top: 16px"></h5>
+                            <h5 class="text-center" th:if="${post.car.name} == null" th:text="${post.car.brand.description} + ' ' + ${post.car.model.description}" style="margin-bottom: 32px; margin-top: 16px"></h5>
+                        </a>
+                        <div class="row text-center">
+                            <div class="col-6" style="cursor: pointer">
+                                <h5 th:text="${#lists.size(post.car.getFollowers())}"></h5>
+                                <p>Подписчики</p>
+                            </div>
+                            <div class="col-6" style="cursor: pointer">
+                                <h5 th:text="${#lists.size(post.car.getPosts())}"></h5>
+                                <p>Посты</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${subscriptionCar != null}" class="card-footer bg-white border-0 px-0 py-0">
+                        <div class="d-grid">
+                            <button th:if="${subscriptionCar == false}" class="btn btn-sm btn-secondary rounded-0 rounded-bottom" name="subscription_button_car" style="background-color: #007bff; border: none; transition: background-color 0.7s ease;" th:onclick="changeSubscriptionCar([[${post.car.id}]])">Подписаться</button>
+                            <button th:if="${subscriptionCar == true}" class="btn btn-sm btn-secondary rounded-0 rounded-bottom" name="subscription_button_car" style="background-color: #28a745; border: none; transition: background-color 0.7s ease;" th:onclick="changeSubscriptionCar([[${post.car.id}]])">Отписаться</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

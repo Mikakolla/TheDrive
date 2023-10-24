@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная</title>
+
+</head>
+<body>
+<div name="nav" th:insert="fragments/nav.html :: nav"></div>
+<script src="/js/news_feed.js"></script>
+<style>
+        .button:hover {
+            background-color : #f8f9fa !important;
+        }
+</style>
+<div>
+    <form action="/news/filter_news" class="col-lg-6 offset-lg-3" style="margin-top: 5%">
+        <div class="d-flex justify-content-center">
+            <input type="hidden" name="pageNo" value="0">
+            <input type="text" name="search_text" class="form-control" placeholder="Введите для поиска" autocomplete="off">
+            <input type="submit" class="btn btn-primary" value="Найти">
+        </div>
+    </form>
+</div>
+<div class="row" style="margin-top: 20px">
+    <div class="col-lg-6 offset-lg-3">
+        <div class="">
+            <div class="card shadow" style="padding: 10px 10px 10px 10px;">
+                <div class="row">
+                    <div class="col-3" style="padding: 10px 10px 10px 10px;" th:each="brand : ${brands}">
+                        <form action="/news/brand_auto" method="get" name="search">
+                            <input type="hidden" name="brand" th:value="${brand.id}">
+                            <button type="submit" class="button btn" style="width: 100%;background-color: white;border: 0;text-align: left;padding: 10px 10px">
+                                <h6 th:text="${brand.description}" style="margin: 0"></h6>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

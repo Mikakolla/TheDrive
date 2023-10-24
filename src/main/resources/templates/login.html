@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<body>
+<div name="nav" th:insert="fragments/nav.html :: nav"></div>
+<div class="row justify-content-center">
+    <div class="login_page">
+        <div style="color:red;" th:if="${param.error}">
+            Неверное имя пользователя или пароль
+        </div>
+        <div style="color:green;">
+            Вы вышли из системы
+        </div>
+        <h1 class="text-center">Авторизация</h1>
+        <form th:action="@{/login}" method="post" class="container col-3">
+            <div class="form-group">
+                <label for="inputUsername" class="form-label">Имя пользователя</label>
+                <input type="text" class="form-control" name="username" id="inputUsername" style="margin-bottom: 10px">
+            </div>
+            <div class="form-group">
+                <label for="inputPassword" class="form-label">Пароль</label>
+                <input type="password" class="form-control" name="password" id="inputPassword" style="margin-bottom: 10px">
+            </div>
+            <button type="submit" class="btn btn-success">Войти</button>
+            <button type="button" href="/registration" onclick="window.location.href=($(this).attr('href'))" class="btn btn-primary" style="float:right">Регистрация</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

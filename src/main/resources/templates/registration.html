@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+<body>
+<div name="nav" th:insert="fragments/nav.html :: nav"></div>
+<div class="row justify-content-center">
+    <div class="login_page">
+        <h1 class="text-center">Регистрация</h1>
+        <form th:action="@{/registration/add}" method="post" class="container col-3">
+            <p style="color:red;" th:text="${message}"></p>
+            <div class="form-group">
+                <label for="inputLogin" class="form-label">Имя пользователя</label>
+                <input type="text" class="form-control" name="login" id="inputLogin" style="margin-bottom: 10px" required>
+            </div>
+            <div class="form-group">
+                <label for="inputPassword" class="form-label">Пароль</label>
+                <input type="password" class="form-control" name="password" id="inputPassword" style="margin-bottom: 10px" required>
+            </div>
+
+            <label for="role" class="form-label">Роль</label>
+            <div class="form-check text-center" id="role" style="margin-bottom: 16px">
+                <label class="form-check-label" for="driver">
+                    Автолюбитель
+                </label>
+                <input type="radio" name="roleCode" value="DRIVER" id="driver" required>
+                <input type="radio" name="roleCode" value="COMPANY" id="company">
+                <label class="form-check-label" for="company">
+                    Автокомпания
+                </label>
+            </div>
+            <button type="submit" class="btn btn-success">Зарегистрироваться</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
